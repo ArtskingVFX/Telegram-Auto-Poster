@@ -1,14 +1,16 @@
 import { TelegramClient } from 'telegram';
 import { Api } from 'telegram';
 import { StringSession } from 'telegram/sessions';
+import type { EntityLike } from 'telegram/define';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Config } from './config';
+import { Config, getConfigDirectory } from './config';
 import { Logger } from './logger';
 
 interface GroupInfo {
   id: string;
   title: string;
+  entity: EntityLike;
   lastMessageId?: number;
 }
 
@@ -20,33 +22,37 @@ export class TelegramAutoPoster {
   private isRunning = false;
 
   private sessionFile: string;
+  private session: StringSession;
 
   constructor(config: Config) {
     this.config = config;
-    
+
+    // Ensure config directory exists
+    const configDir = getConfigDirectory();
+
     // Load existing session if available, otherwise create new one
-    this.sessionFile = path.join(process.cwd(), `${config.sessionName}.session`);
+    this.sessionFile = path.join(configDir, `session.config`);
     let sessionString = '';
-    
+
     if (fs.existsSync(this.sessionFile)) {
       try {
         sessionString = fs.readFileSync(this.sessionFile, 'utf-8');
-        Logger.info('Loaded existing session');
+        Logger.info('Loaded existing session from config directory');
       } catch (error) {
         Logger.warn('Failed to load session file, starting fresh');
       }
     }
-    
-    const session = new StringSession(sessionString);
-    
-    this.client = new TelegramClient(session, config.apiId, config.apiHash, {
+
+    this.session = new StringSession(sessionString);
+
+    this.client = new TelegramClient(this.session, config.apiId, config.apiHash, {
       connectionRetries: 5,
     });
   }
 
   private saveSession(): void {
     try {
-      const sessionString = this.client.session.save() as string;
+      const sessionString = this.session.save() as unknown as string;
       if (sessionString) {
         fs.writeFileSync(this.sessionFile, sessionString, 'utf-8');
       }
@@ -121,12 +127,22 @@ export class TelegramAutoPoster {
         })
       );
 
-      if ('user' in signInResult) {
-        Logger.success(`Authentication successful! Logged in as: ${signInResult.user.firstName || 'User'}`);
+      if ('user' in signInResult && signInResult.user) {
+        const user = signInResult.user;
+        let userName = 'User';
+
+        // Check if user has firstName property (not UserEmpty)
+        if ('firstName' in user) {
+          userName = user.firstName || 'User';
+        } else if ('username' in user && user.username) {
+          userName = `@${user.username}`;
+        }
+
+        Logger.success(`Authentication successful! Logged in as: ${userName}`);
       } else {
         Logger.success('Authentication successful');
       }
-      
+
       // Save session after successful authentication
       this.saveSession();
     } catch (error) {
@@ -141,7 +157,7 @@ export class TelegramAutoPoster {
       output: process.stdout,
     });
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       readline.question(prompt, (answer: string) => {
         readline.close();
         resolve(answer.trim());
@@ -157,7 +173,9 @@ export class TelegramAutoPoster {
       for (const dialog of dialogs) {
         if (dialog.isGroup || dialog.isChannel) {
           const entity = dialog.entity;
-          if (entity) {
+          const dialogId = dialog.id;
+
+          if (entity && dialogId !== undefined && dialogId !== null) {
             let title = 'Unknown';
             if ('title' in entity && entity.title) {
               title = entity.title;
@@ -168,11 +186,11 @@ export class TelegramAutoPoster {
             }
 
             // Store dialog ID as string (Telegram IDs can be negative for groups)
-            // We'll convert to BigInt when needed for API calls
-            const groupId = dialog.id.toString();
+            const groupId = dialogId.toString();
             this.groups.push({
               id: groupId,
               title,
+              entity, // Store entity for API calls
             });
             Logger.info(`Found group: ${title} (ID: ${groupId})`);
           }
@@ -213,12 +231,12 @@ export class TelegramAutoPoster {
     try {
       Logger.info(`Posting to group: ${group.title} (ID: ${group.id})`);
 
-      const groupId = BigInt(group.id);
-
       // Delete previous message if exists
       if (group.lastMessageId) {
         try {
-          await this.client.deleteMessages(groupId, [group.lastMessageId]);
+          await this.client.deleteMessages(group.entity, [group.lastMessageId], {
+            revoke: false,
+          });
           Logger.info(`Deleted previous message in "${group.title}"`);
         } catch (error) {
           Logger.warn(
@@ -229,7 +247,7 @@ export class TelegramAutoPoster {
       }
 
       // Send new message
-      const sentMessage = await this.client.sendMessage(groupId, {
+      const sentMessage = await this.client.sendMessage(group.entity, {
         message: this.config.message,
       });
 
@@ -244,9 +262,7 @@ export class TelegramAutoPoster {
 
         if (messageId) {
           group.lastMessageId = messageId;
-          Logger.success(
-            `Posted message to "${group.title}" (Message ID: ${messageId})`
-          );
+          Logger.success(`Posted message to "${group.title}" (Message ID: ${messageId})`);
         } else {
           Logger.warn(`Posted to "${group.title}" but couldn't get message ID`);
         }

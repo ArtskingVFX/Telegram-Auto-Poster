@@ -22,8 +22,16 @@ API_ID=your_api_id_here
 API_HASH=your_api_hash_here
 SESSION_NAME=session
 POST_INTERVAL_MS=60000
-MESSAGE=Hello! This is an automated message.
 ```
+
+Create `config/message.txt` file with your message:
+
+```bash
+mkdir -p config
+echo "Hello! This is an automated message." > config/message.txt
+```
+
+**Note**: The `config/message.txt` file takes priority over the `MESSAGE` environment variable.
 
 ## 4. Run the Bot
 
@@ -44,9 +52,9 @@ On first run, the bot will:
 1. Ask for your phone number (with country code, e.g., +1234567890)
 2. Send you a verification code via Telegram
 3. Ask you to enter the code
-4. Save your session for future runs
+4. Save your session to `config/{SESSION_NAME}.session` for future runs
 
-After authentication, the session is saved and you won't need to authenticate again.
+After authentication, the session is saved in the `config/` directory and you won't need to authenticate again.
 
 ## 6. How It Works
 

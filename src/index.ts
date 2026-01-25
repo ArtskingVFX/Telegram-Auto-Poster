@@ -27,7 +27,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
+main().catch(error => {
   Logger.error('Unhandled error', error);
   process.exit(1);
 });

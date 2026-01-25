@@ -46,18 +46,33 @@ cp .env.example .env
 ```env
 API_ID=your_api_id
 API_HASH=your_api_hash
-SESSION_NAME=session
 POST_INTERVAL_MS=60000
-MESSAGE=Your message here
 ```
+
+5. Create `config/message.txt` file with your message (or set `MESSAGE` in `.env`):
+
+```bash
+mkdir -p config
+echo "Your message here" > config/message.txt
+```
+
+**Note**: The `config/message.txt` file takes priority over the `MESSAGE` environment variable. If the file doesn't exist, it will fall back to the `MESSAGE` env var.
 
 ## Configuration
 
 - `API_ID`: Your Telegram API ID (from https://my.telegram.org/apps)
 - `API_HASH`: Your Telegram API Hash
-- `SESSION_NAME`: Name for the session file (default: "session")
+- `SESSION_NAME`: Name for the session file (default: "session", saved in `config/` directory)
 - `POST_INTERVAL_MS`: Interval between posts in milliseconds (default: 60000 = 1 minute)
-- `MESSAGE`: The message to post in groups
+- `MESSAGE`: The message to post in groups (optional - `config/message.txt` takes priority)
+
+### File Structure
+
+The bot uses a `config/` directory in the project root for storing:
+- **Session files**: `config/{SESSION_NAME}.session` - Automatically created after first authentication
+- **Message file**: `config/message.txt` - Your message to post (create this file or use `MESSAGE` env var)
+
+The `config/` directory is automatically created on first run.
 
 ## Usage
 
@@ -128,6 +143,9 @@ Press `Ctrl+C` to gracefully stop the bot. It will:
 │   ├── bot.ts        # Bot logic and posting
 │   ├── config.ts     # Configuration loader
 │   └── logger.ts     # Logging utility
+├── config/           # Configuration directory (auto-created)
+│   ├── session.session  # Session file (auto-created after auth)
+│   └── message.txt      # Message file (create this)
 ├── dist/             # Compiled JavaScript (generated)
 ├── .env              # Environment variables (create this)
 ├── .env.example      # Example environment file
@@ -143,7 +161,9 @@ Press `Ctrl+C` to gracefully stop the bot. It will:
 - The bot requires you to be a member of the groups you want to post to
 - Make sure you have permission to send messages in the groups
 - The bot deletes its own previous messages before posting new ones
-- Session files are stored locally and should be kept secure
+- Session files are stored in `config/` directory and should be kept secure
+- Message is read from `config/message.txt` (falls back to `MESSAGE` env var if file doesn't exist)
+- The `config/` directory is automatically created on first run
 
 ## License
 
