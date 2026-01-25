@@ -88,6 +88,9 @@ export class TelegramAutoPoster {
       }
 
       this.isRunning = true;
+      Logger.info(
+        `Starting sequential posting: will post to each group with ${this.config.postIntervalMs / 1000}s interval between posts`
+      );
       this.startPosting();
       Logger.success('Auto posting started');
     } catch (error) {
@@ -203,28 +206,43 @@ export class TelegramAutoPoster {
   }
 
   private startPosting(): void {
-    for (const group of this.groups) {
-      this.schedulePosting(group);
+    // Start sequential posting: post to one group, wait interval, then next group
+    this.postSequentially();
+  }
+
+  private async postSequentially(): Promise<void> {
+    let currentIndex = 0;
+    let isFirstPost = true;
+
+    while (this.isRunning) {
+      if (this.groups.length === 0) {
+        break;
+      }
+
+      const group = this.groups[currentIndex];
+      
+      try {
+        await this.postToGroup(group);
+      } catch (error) {
+        Logger.error(`Error posting to group "${group.title}"`, error);
+      }
+
+      // Move to next group (wrap around to first group after last)
+      currentIndex = (currentIndex + 1) % this.groups.length;
+
+      // Wait for the configured interval before posting to next group
+      // Skip wait for the very first post
+      if (this.isRunning && !isFirstPost) {
+        await this.sleep(this.config.postIntervalMs);
+      } else if (this.isRunning) {
+        // First post completed, mark as not first anymore
+        isFirstPost = false;
+      }
     }
   }
 
-  private schedulePosting(group: GroupInfo): void {
-    // Post immediately for the first time
-    this.postToGroup(group);
-
-    // Then schedule periodic posts
-    const interval = setInterval(() => {
-      if (this.isRunning) {
-        this.postToGroup(group);
-      } else {
-        clearInterval(interval);
-      }
-    }, this.config.postIntervalMs);
-
-    this.postingIntervals.set(group.id, interval);
-    Logger.info(
-      `Scheduled posting for "${group.title}" every ${this.config.postIntervalMs / 1000} seconds`
-    );
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private async postToGroup(group: GroupInfo): Promise<void> {
@@ -279,7 +297,7 @@ export class TelegramAutoPoster {
     Logger.info('Stopping auto poster...');
     this.isRunning = false;
 
-    // Clear all intervals
+    // Clear all intervals (if any remain from old implementation)
     for (const interval of this.postingIntervals.values()) {
       clearInterval(interval);
     }
