@@ -273,16 +273,20 @@ export class TelegramAutoPoster {
         Logger.error(`Error posting to group "${group.title}"`, error);
       }
 
+      // Mark first post as completed
+      isFirstPost = false;
+
       // Move to next group (wrap around to first group after last)
       currentIndex = (currentIndex + 1) % this.groups.length;
 
       // Wait for the configured interval before posting to next group
-      // Skip wait for the very first post
-      if (this.isRunning && !isFirstPost) {
-        await this.sleep(this.config.postIntervalMs);
-      } else if (this.isRunning) {
-        // First post completed, mark as not first anymore
-        isFirstPost = false;
+      // Add random variation (10-20 seconds) to make it less detectable as a bot
+      if (this.isRunning) {
+        const randomVariation = Math.floor(Math.random() * 10000) + 10000; // 10-20 seconds in ms
+        const totalWaitTime = this.config.postIntervalMs + randomVariation;
+        const waitSeconds = (totalWaitTime / 1000).toFixed(1);
+        Logger.info(`Waiting ${waitSeconds}s before next post (${this.config.postIntervalMs / 1000}s base + ${(randomVariation / 1000).toFixed(1)}s random)`);
+        await this.sleep(totalWaitTime);
       }
     }
   }
