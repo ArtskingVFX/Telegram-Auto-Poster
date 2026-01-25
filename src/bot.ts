@@ -122,32 +122,78 @@ export class TelegramAutoPoster {
       Logger.info('Please enter the code you received:');
       const code = await this.promptInput('Code: ');
 
-      const signInResult = await this.client.invoke(
-        new Api.auth.SignIn({
-          phoneNumber,
-          phoneCodeHash,
-          phoneCode: code,
-        })
-      );
+      try {
+        const signInResult = await this.client.invoke(
+          new Api.auth.SignIn({
+            phoneNumber,
+            phoneCodeHash,
+            phoneCode: code,
+          })
+        );
 
-      if ('user' in signInResult && signInResult.user) {
-        const user = signInResult.user;
-        let userName = 'User';
+        if ('user' in signInResult && signInResult.user) {
+          const user = signInResult.user;
+          let userName = 'User';
 
-        // Check if user has firstName property (not UserEmpty)
-        if ('firstName' in user) {
-          userName = user.firstName || 'User';
-        } else if ('username' in user && user.username) {
-          userName = `@${user.username}`;
+          // Check if user has firstName property (not UserEmpty)
+          if ('firstName' in user) {
+            userName = user.firstName || 'User';
+          } else if ('username' in user && user.username) {
+            userName = `@${user.username}`;
+          }
+
+          Logger.success(`Authentication successful! Logged in as: ${userName}`);
+        } else {
+          Logger.success('Authentication successful');
         }
 
-        Logger.success(`Authentication successful! Logged in as: ${userName}`);
-      } else {
-        Logger.success('Authentication successful');
-      }
+        // Save session after successful authentication
+        this.saveSession();
+      } catch (signInError: any) {
+        // Check if 2FA password is required
+        if (
+          signInError.errorMessage === 'SESSION_PASSWORD_NEEDED' ||
+          (signInError instanceof Error && signInError.message.includes('SESSION_PASSWORD_NEEDED'))
+        ) {
+          Logger.info('Two-factor authentication is enabled. Please enter your password:');
+          const password = await this.promptInput('Password: ');
 
-      // Save session after successful authentication
-      this.saveSession();
+          // Get password info for SRP
+          const passwordResult = await this.client.invoke(new Api.account.GetPassword());
+
+          // Compute password hash using SRP
+          const Password = await import('telegram/Password');
+          const passwordCheck = await Password.computeCheck(passwordResult, password);
+
+          // Check password
+          const checkPasswordResult = await this.client.invoke(
+            new Api.auth.CheckPassword({
+              password: passwordCheck,
+            })
+          );
+
+          if ('user' in checkPasswordResult && checkPasswordResult.user) {
+            const user = checkPasswordResult.user;
+            let userName = 'User';
+
+            if ('firstName' in user) {
+              userName = user.firstName || 'User';
+            } else if ('username' in user && user.username) {
+              userName = `@${user.username}`;
+            }
+
+            Logger.success(`Authentication successful! Logged in as: ${userName}`);
+          } else {
+            Logger.success('Authentication successful');
+          }
+
+          // Save session after successful authentication
+          this.saveSession();
+        } else {
+          // Re-throw if it's a different error
+          throw signInError;
+        }
+      }
     } catch (error) {
       Logger.error('Authentication failed', error);
       throw error;
