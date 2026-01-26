@@ -266,11 +266,14 @@ export class TelegramAutoPoster {
       }
 
       const group = this.groups[currentIndex];
+      let postSuccess = false;
       
       try {
         await this.postToGroup(group);
+        postSuccess = true;
       } catch (error) {
         Logger.error(`Error posting to group "${group.title}"`, error);
+        postSuccess = false;
       }
 
       // Mark first post as completed
@@ -279,14 +282,18 @@ export class TelegramAutoPoster {
       // Move to next group (wrap around to first group after last)
       currentIndex = (currentIndex + 1) % this.groups.length;
 
-      // Wait for the configured interval before posting to next group
-      // Add random variation (10-20 seconds) to make it less detectable as a bot
-      if (this.isRunning) {
+      // Only wait for interval if post was successful
+      // If post failed, try next group immediately without waiting
+      if (postSuccess && this.isRunning) {
+        // Wait for the configured interval before posting to next group
+        // Add random variation (10-20 seconds) to make it less detectable as a bot
         const randomVariation = Math.floor(Math.random() * 10000) + 10000; // 10-20 seconds in ms
         const totalWaitTime = this.config.postIntervalMs + randomVariation;
         const waitSeconds = (totalWaitTime / 1000).toFixed(1);
         Logger.info(`Waiting ${waitSeconds}s before next post (${this.config.postIntervalMs / 1000}s base + ${(randomVariation / 1000).toFixed(1)}s random)`);
         await this.sleep(totalWaitTime);
+      } else if (!postSuccess) {
+        Logger.info('Post failed, trying next group immediately without waiting');
       }
     }
   }
@@ -296,50 +303,47 @@ export class TelegramAutoPoster {
   }
 
   private async postToGroup(group: GroupInfo): Promise<void> {
-    try {
-      Logger.info(`Posting to group: ${group.title} (ID: ${group.id})`);
+    Logger.info(`Posting to group: ${group.title} (ID: ${group.id})`);
 
-      // Delete previous message if exists
-      if (group.lastMessageId) {
-        try {
-          await this.client.deleteMessages(group.entity, [group.lastMessageId], {
-            revoke: false,
-          });
-          Logger.info(`Deleted previous message in "${group.title}"`);
-        } catch (error) {
-          Logger.warn(
-            `Failed to delete previous message in "${group.title}":`,
-            error instanceof Error ? error.message : error
-          );
-        }
+    // Delete previous message if exists
+    if (group.lastMessageId) {
+      try {
+        await this.client.deleteMessages(group.entity, [group.lastMessageId], {
+          revoke: false,
+        });
+        Logger.info(`Deleted previous message in "${group.title}"`);
+      } catch (error) {
+        Logger.warn(
+          `Failed to delete previous message in "${group.title}":`,
+          error instanceof Error ? error.message : error
+        );
+        // Don't throw here - deletion failure shouldn't prevent posting
       }
+    }
 
-      // Send new message
-      const sentMessage = await this.client.sendMessage(group.entity, {
-        message: this.config.message,
-      });
+    // Send new message - throw error if it fails so we can try next group immediately
+    const sentMessage = await this.client.sendMessage(group.entity, {
+      message: this.config.message,
+    });
 
-      if (sentMessage) {
-        // Handle different message response types
-        let messageId: number | undefined;
-        if (Array.isArray(sentMessage)) {
-          messageId = sentMessage[0]?.id;
-        } else if (typeof sentMessage === 'object' && 'id' in sentMessage) {
-          messageId = sentMessage.id as number;
-        }
+    if (!sentMessage) {
+      throw new Error(`Failed to send message to "${group.title}" - no response from Telegram`);
+    }
 
-        if (messageId) {
-          group.lastMessageId = messageId;
-          Logger.success(`Posted message to "${group.title}" (Message ID: ${messageId})`);
-        } else {
-          Logger.warn(`Posted to "${group.title}" but couldn't get message ID`);
-        }
-      }
-    } catch (error) {
-      Logger.error(
-        `Failed to post to group "${group.title}":`,
-        error instanceof Error ? error.message : error
-      );
+    // Handle different message response types
+    let messageId: number | undefined;
+    if (Array.isArray(sentMessage)) {
+      messageId = sentMessage[0]?.id;
+    } else if (typeof sentMessage === 'object' && 'id' in sentMessage) {
+      messageId = sentMessage.id as number;
+    }
+
+    if (messageId) {
+      group.lastMessageId = messageId;
+      Logger.success(`Posted message to "${group.title}" (Message ID: ${messageId})`);
+    } else {
+      Logger.warn(`Posted to "${group.title}" but couldn't get message ID`);
+      // Still consider this a success since message was sent
     }
   }
 
